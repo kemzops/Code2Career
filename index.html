@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.red.min.css"
+        />
+        <title>JavaScript Coding Assessment | Code2Career</title>
+    </head>
+    <body>
+        <header>
+            <hgroup>
+                <h2>JavaScript Coding Assessment</h2>
+                <p>Gaza Sky Geeks | Code2Career</p>
+            </hgroup>
+        </header>
+        <main>
+            <input
+                type="search"
+                id="filter"
+                placeholder="Type to filter quotes..."
+                disabled
+            />
+            <span id="message" aria-busy="true"></span>
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Quote</th>
+                        <th scope="col">Author</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <button class="contrast" id="refetchButton">Re-fetch</button>
+        </main>
+        <footer>
+            <p>
+                Quotes by
+                <a href="https://dummyjson.com/quotes" target="_blank">
+                    DummyJSON API
+                </a>
+            </p>
+            <hr />
+            <p>
+                &copy; 2025
+                <strong>
+                    <a
+                        href="https://github.com/kemzops"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        KemzoPS
+                    </a>
+                </strong>
+                MIT Licensed.
+            </p>
+        </footer>
+
+        <script type="module">
+            const quotesFilter = document.getElementById("filter");
+            const tableBody = document.getElementById("tableBody");
+            const message = document.getElementById("message");
+            const refetchButton = document.getElementById("refetchButton");
+
+            let quotesArray = [];
+
+            const renderQuoteTable = (array) => {
+                tableBody.innerHTML = "";
+
+                if (array.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #666;">
+                                <i>No matching quotes found.</i>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                for (let i = 0; i < array.length; i++) {
+                    const quote = array[i];
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${quote.id}</td>
+                        <td>${quote.quote}</td>
+                        <td>${quote.author}</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+            };
+
+            const filterQuotesByText = (inputValue) => {
+                const filtered = quotesArray.filter((q) =>
+                    q.quote.toLowerCase().includes(inputValue.toLowerCase()),
+                );
+
+                renderQuoteTable(filtered);
+                message.innerHTML = `Showing <mark>${filtered.length}</mark> of <mark>${quotesArray.length}</mark> quotes.`;
+                message.removeAttribute("aria-busy");
+            };
+
+            const fetchQuotes = async () => {
+                message.innerHTML = "Fetching quotes...";
+                message.setAttribute("aria-busy", "true");
+
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #666;"><i>Loading...</i></td>
+                    </tr>
+                `;
+
+                try {
+                    const response = await fetch(
+                        "https://dummyjson.com/quotes",
+                    );
+                    const statusCode = response.status || "";
+
+                    if (!response.ok) {
+                        message.innerHTML = `Failed to fetch quotes ( <small>HTTP ${statusCode}</small> ).`;
+                        return;
+                    }
+
+                    const data = await response.json();
+                    //console.log(data);
+                    quotesArray = data.quotes || [];
+                    //console.log(quotesArray);
+
+                    renderQuoteTable(quotesArray);
+                    quotesFilter.disabled = false;
+
+                    message.innerHTML = `Fetched <mark>${quotesArray.length}</mark> quotes successfully ( <small>HTTP ${statusCode}</small> ).`;
+                } catch (error) {
+                    message.innerHTML = "Could not fetch quotes.";
+                    console.log(error);
+                } finally {
+                    message.removeAttribute("aria-busy");
+                }
+            };
+
+            quotesFilter.addEventListener("input", (event) => {
+                filterQuotesByText(event.target.value);
+            }); // "change" needs more effort ;d
+
+            refetchButton.addEventListener("click", () => {
+                location.reload();
+            }); // classic refresh
+
+            fetchQuotes();
+        </script>
+    </body>
+</html>
